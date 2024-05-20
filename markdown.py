@@ -1,3 +1,4 @@
+import streamlit as st
 import re
 from docx import Document
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
@@ -5,11 +6,8 @@ from docx.shared import Pt
 from markdown2 import markdown
 from bs4 import BeautifulSoup
 
-def parse_markdown_to_docx(md_file, docx_file):
-    # Read the markdown file
-    with open(md_file, 'r', encoding='utf-8') as file:
-        md_content = file.read()
-
+# Function to parse Markdown to Docx
+def parse_markdown_to_docx(md_content, docx_file):
     # Convert markdown to HTML
     html_content = markdown(md_content)
 
@@ -62,7 +60,27 @@ def parse_markdown_to_docx(md_file, docx_file):
     # Save the document
     doc.save(docx_file)
 
-# Convert the given Markdown file to Word document
-md_file_path = 'path/to/your/markdown/file.md'
-docx_file_path = 'path/to/your/output/file.docx'
-parse_markdown_to_docx(md_file_path, docx_file_path)
+# Streamlit application
+st.title("Markdown to Word Converter")
+
+# File uploader
+uploaded_file = st.file_uploader("Choose a Markdown file", type="md")
+
+if uploaded_file is not None:
+    # Read the uploaded markdown file
+    md_content = uploaded_file.read().decode('utf-8')
+    
+    # Define the output file path
+    output_path = "converted_document.docx"
+    
+    # Convert the Markdown to Docx
+    parse_markdown_to_docx(md_content, output_path)
+    
+    # Provide a download button for the converted file
+    with open(output_path, "rb") as file:
+        st.download_button(
+            label="Download Word Document",
+            data=file,
+            file_name="converted_document.docx",
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
