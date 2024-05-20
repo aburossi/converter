@@ -11,6 +11,8 @@ def clean_markdown(md_content):
     md_content = re.sub(r'\[\!.*?\]', '', md_content)
     # Remove all double brackets [[ or ]]
     md_content = md_content.replace('[[', '').replace(']]', '')
+    # Remove multiple newlines
+    md_content = re.sub(r'\n\s*\n', '\n', md_content)
     return md_content
 
 # Function to parse Markdown to Docx
@@ -44,29 +46,35 @@ def parse_markdown_to_docx(md_content, docx_file):
         return paragraph
 
     # Parse HTML elements and add them to the Word document
+    previous_was_paragraph = False
     for element in soup.children:
-        if element.name == 'p':
-            add_paragraph(element.text)
-        elif element.name == 'h1':
-            add_paragraph(element.text, 'Heading 1')
-        elif element.name == 'h2':
-            add_paragraph(element.text, 'Heading 2')
-        elif element.name == 'h3':
-            add_paragraph(element.text, 'Heading 3')
-        elif element.name == 'ul':
-            for li in element.find_all('li'):
-                add_paragraph('• ' + li.text)
-        elif element.name == 'blockquote':
-            quote = add_paragraph(element.text, style='Quote')
-            quote.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
-        elif element.name == 'strong':
-            add_paragraph(element.text, bold=True)
-        elif element.name == 'em':
-            add_paragraph(element.text, italic=True)
-        elif element.name == 'code':
-            add_paragraph(element.text, style='Code')
+        if element.name in ['p', 'h1', 'h2', 'h3', 'ul', 'blockquote', 'strong', 'em', 'code']:
+            if previous_was_paragraph:
+                # Avoid adding extra empty lines by not adding new paragraphs consecutively
+                doc.paragraphs[-1].add_run('\n')
+            if element.name == 'p':
+                add_paragraph(element.text)
+            elif element.name == 'h1':
+                add_paragraph(element.text, 'Heading 1')
+            elif element.name == 'h2':
+                add_paragraph(element.text, 'Heading 2')
+            elif element.name == 'h3':
+                add_paragraph(element.text, 'Heading 3')
+            elif element.name == 'ul':
+                for li in element.find_all('li'):
+                    add_paragraph('• ' + li.text)
+            elif element.name == 'blockquote':
+                quote = add_paragraph(element.text, style='Quote')
+                quote.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+            elif element.name == 'strong':
+                add_paragraph(element.text, bold=True)
+            elif element.name == 'em':
+                add_paragraph(element.text, italic=True)
+            elif element.name == 'code':
+                add_paragraph(element.text, style='Code')
+            previous_was_paragraph = True
         else:
-            add_paragraph(element.text)
+            previous_was_paragraph = False
 
     # Save the document
     doc.save(docx_file)
