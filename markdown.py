@@ -2,12 +2,22 @@ import streamlit as st
 import re
 from docx import Document
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-from docx.shared import Pt
 from markdown2 import markdown
 from bs4 import BeautifulSoup
 
+# Function to clean the Markdown content
+def clean_markdown(md_content):
+    # Remove callouts formatted like [!sometext]
+    md_content = re.sub(r'\[\!.*?\]', '', md_content)
+    # Remove all double brackets [[ or ]]
+    md_content = md_content.replace('[[', '').replace(']]', '')
+    return md_content
+
 # Function to parse Markdown to Docx
 def parse_markdown_to_docx(md_content, docx_file):
+    # Clean the markdown content
+    md_content = clean_markdown(md_content)
+    
     # Convert markdown to HTML
     html_content = markdown(md_content)
 
@@ -23,6 +33,7 @@ def parse_markdown_to_docx(md_content, docx_file):
     # Function to add paragraph with optional bold and italic text
     def add_paragraph(text, style=None, bold=False, italic=False):
         paragraph = doc.add_paragraph()
+        paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
         run = paragraph.add_run(text)
         if bold:
             run.bold = True
@@ -47,7 +58,7 @@ def parse_markdown_to_docx(md_content, docx_file):
                 add_paragraph('• ' + li.text)
         elif element.name == 'blockquote':
             quote = add_paragraph(element.text, style='Quote')
-            quote.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+            quote.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
         elif element.name == 'strong':
             add_paragraph(element.text, bold=True)
         elif element.name == 'em':
@@ -63,13 +74,19 @@ def parse_markdown_to_docx(md_content, docx_file):
 # Streamlit application
 st.title("Markdown to Word Converter")
 
-# File uploader
-uploaded_file = st.file_uploader("Choose a Markdown file", type="md")
+# Options for input
+option = st.selectbox("Choose the input method", ["Upload Markdown File", "Paste Markdown Text"])
 
-if uploaded_file is not None:
-    # Read the uploaded markdown file
-    md_content = uploaded_file.read().decode('utf-8')
-    
+md_content = ""
+
+if option == "Upload Markdown File":
+    uploaded_file = st.file_uploader("Choose a Markdown file", type="md")
+    if uploaded_file is not None:
+        md_content = uploaded_file.read().decode('utf-8')
+elif option == "Paste Markdown Text":
+    md_content = st.text_area("Paste your Markdown text here")
+
+if md_content:
     # Define the output file path
     output_path = "converted_document.docx"
     
