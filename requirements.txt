@@ -1,0 +1,7 @@
+streamlit
+re
+docx
+docx.enum.text 
+docx.shared
+markdown2
+bs4
