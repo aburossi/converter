@@ -1,7 +1,4 @@
 streamlit
-re
-docx
-docx.enum.text 
-docx.shared
+python-docx
 markdown2
-bs4
+beautifulsoup4
